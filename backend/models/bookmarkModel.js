@@ -30,6 +30,20 @@ async function getBookmarkById(id) {
   return result.rows[0];
 }
 
+async function getBookmarkByTitle(title) {
+  const query = `
+    SELECT b.*, 
+      COALESCE(array_agg(c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS categories
+    FROM Bookmark b
+    LEFT JOIN BookmarkCategory bc ON b.id = bc.bookmark_id
+    LEFT JOIN Category c ON bc.category_id = c.id
+    WHERE b.title = $1
+    GROUP BY b.id
+  `;
+  const result = await db.query(query, [title]);
+  return result.rows[0];
+}
+
 async function getBookmarksByUserId(user_id) {
   const query = `
     SELECT b.*, COALESCE(array_agg(c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS categories
@@ -170,6 +184,7 @@ export {
   getBookmarkById,
   getBookmarksByUserId,
   getBookmarkByUserIDandCategory,
+  getBookmarkByTitle,
   getBookmarkByTitleAndUserId,
   createBookmark,
   updateBookmark,
